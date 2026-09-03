@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IdentityService.Services</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Referinte catre proiectele de mai jos in ierarhie -->
+    <ProjectReference Include="..\IdentutyService.Infrastucture\IdentutyService.Infrastucture.csproj" />
+    <ProjectReference Include="..\IdentityService.DTO\IdentityService.DTO.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MailKit + MimeKit — EmailService -->
+    <PackageReference Include="MailKit" Version="4.16.0" />
+    <PackageReference Include="MimeKit" Version="4.16.0" />
+  </ItemGroup>
+
+</Project>

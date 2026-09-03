@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>GateWay.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.Extensions necesare în class library (nu vin automat ca în Web SDK) -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"    Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options"                       Version="10.0.0" />
+    <!-- Configure<T>(IConfigurationSection) — extensie din acest pachet -->
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GateWay.DTO\GateWay.DTO.csproj" />
+  </ItemGroup>
+
+</Project>

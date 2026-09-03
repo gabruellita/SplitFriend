@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FinanceService.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Dapper (necesar pentru DapperConfiguration.Configure()) -->
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <!-- Npgsql — NpgsqlConnection in DatabaseConnectionFactory -->
+    <PackageReference Include="Npgsql" Version="9.0.2" />
+    <!-- Microsoft.Extensions necesare in class library (IConfiguration in DatabaseConnectionFactory) -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ExportService.API/ExportService.API.csproj" />
+  <Project Path="ExportService.DTO/ExportService.DTO.csproj" />
+  <Project Path="ExportService.Infrastructure/ExportService.Infrastructure.csproj" />
+  <Project Path="ExportService.Services/ExportService.Services.csproj" />
+</Solution>

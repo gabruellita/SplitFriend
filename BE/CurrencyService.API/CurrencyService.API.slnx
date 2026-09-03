@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="CurrencyService.API/CurrencyService.API.csproj" />
+  <Project Path="CurrencyService.DTO/CurrencyService.DTO.csproj" />
+  <Project Path="CurrencyService.Infrastructure/CurrencyService.Infrastructure.csproj" />
+  <Project Path="CurrencyService.Services/CurrencyService.Services.csproj" />
+  <Project Path="CurrencyService.Tests/CurrencyService.Tests.csproj" />
+</Solution>

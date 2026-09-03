@@ -1,0 +1,8 @@
+@FinanceService.API_HostAddress = http://localhost:5002
+
+### Testare directa (fara Gateway) — necesita header X-User-Id manual
+GET {{FinanceService.API_HostAddress}}/api/categories
+X-User-Id: 1
+Accept: application/json
+
+###

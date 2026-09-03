@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="StatisticsService.API/StatisticsService.API.csproj" />
+  <Project Path="StatisticsService.DTO/StatisticsService.DTO.csproj" />
+  <Project Path="StatisticsService.Infrastructure/StatisticsService.Infrastructure.csproj" />
+  <Project Path="StatisticsService.Services/StatisticsService.Services.csproj" />
+</Solution>

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Namespace curat, indiferent de typo-ul din numele folderului -->
+    <RootNamespace>IdentityService.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Dapper (necesar pentru DapperConfiguration.Configure()) -->
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.9" />
+    <!-- Npgsql — NpgsqlConnection în DatabaseConnectionFactory -->
+    <PackageReference Include="Npgsql" Version="9.0.2" />
+    <!-- BCrypt — PasswordHasher -->
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <!-- JWT token generation -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.0" />
+    <!-- Microsoft.Extensions necesare in class library (nu vin automat ca in Web SDK) -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

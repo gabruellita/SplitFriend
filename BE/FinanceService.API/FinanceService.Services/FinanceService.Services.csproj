@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FinanceService.Services</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FinanceService.Infrastructure\FinanceService.Infrastructure.csproj" />
+    <ProjectReference Include="..\FinanceService.DTO\FinanceService.DTO.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ILogger<T> in RecurringTemplateService -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Expune membrii internal (ex. ComputeOwedAmounts) proiectului de teste unitare. -->
+    <InternalsVisibleTo Include="FinanceService.Tests" />
+  </ItemGroup>
+
+</Project>

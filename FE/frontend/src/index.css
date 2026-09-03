@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50:  #eff6ff;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+
+  /* Semantic financiar — venit / cheltuiala (folosite mereu cu icon/semn, nu doar culoare) */
+  --color-income:  #059669; /* emerald-600 */
+  --color-expense: #e11d48; /* rose-600   */
+}
+
+html, body, #root { height: 100%; }
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-feature-settings: "tnum"; /* cifre tabular pentru aliniere sume */
+}
+
+/* Card glass reutilizabil (glassmorphism monocrom).
+   Compus din utilitare Tailwind ca sa primeasca prefixarea corecta (webkit + standard). */
+@utility glass-card {
+  @apply border border-white/40 bg-white/60 backdrop-blur-xl;
+}
+
+/* Respecta preferinta de reducere a miscarii */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

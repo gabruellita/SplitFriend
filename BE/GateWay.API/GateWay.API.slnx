@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="GateWay.API/GateWay.API.csproj" />
+  <Project Path="GateWay.DTO/GateWay.DTO.csproj" />
+  <Project Path="GateWay.Infrastructure/GateWay.Infrastructure.csproj" />
+  <Project Path="GateWay.Services/GateWay.Services.csproj" />
+  <Project Path="GateWay.Tests/GateWay.Tests.csproj" />
+</Solution>

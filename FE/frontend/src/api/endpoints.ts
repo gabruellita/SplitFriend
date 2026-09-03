@@ -1,0 +1,63 @@
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN:           '/api/identity/auth/login',
+    REGISTER:        '/api/identity/auth/register',
+    CONFIRM_EMAIL:   '/api/identity/auth/confirm-email',
+    REFRESH:         '/api/identity/auth/refresh',
+    LOGOUT:          '/api/identity/auth/logout',
+    ME:              '/api/identity/auth/me',
+    FORGOT_PASSWORD: '/api/identity/auth/forgot-password',
+    RESET_PASSWORD:  '/api/identity/auth/reset-password',
+  },
+  ME: {
+    BASE:            '/api/identity/me',
+    CHANGE_PASSWORD: '/api/identity/me/change-password',
+  },
+  CURRENCY: {
+    CONVERT: '/api/currency/convert',
+    RATES:   '/api/currency/rates',
+  },
+  CURRENCIES: '/api/identity/currencies',
+  FINANCE: {
+    TRANSACTIONS:                  '/api/finance/transactions',
+    TRANSACTIONS_SUMMARY:          '/api/finance/transactions/summary',
+    CATEGORIES:                    '/api/finance/categories',
+    RECURRING_TEMPLATES:           '/api/finance/recurring-templates',
+    RECURRING_TEMPLATES_RUN_DUE:   '/api/finance/recurring-templates/run-due',
+  },
+  STATISTICS: {
+    TIMESERIES:         '/api/statistics/timeseries',
+    CATEGORY_BREAKDOWN: '/api/statistics/category-breakdown',
+    TOP_CATEGORIES:     '/api/statistics/top-categories',
+    CALENDAR:           '/api/statistics/calendar',
+    HISTOGRAM:          '/api/statistics/histogram',
+    SAVINGS_RATE:       '/api/statistics/savings-rate',
+    RUNNING_BALANCE:    '/api/statistics/running-balance',
+    MOM:                '/api/statistics/mom',
+    PARETO:             '/api/statistics/pareto',
+    WEEKDAY:            '/api/statistics/weekday',
+    RECURRING_SPLIT:    '/api/statistics/recurring-split',
+  },
+  EXPORT: {
+    REPORT: '/api/export/report',
+  },
+  GROUPS: {
+    BASE:      '/api/finance/groups',
+    byId:        (id: number) => `/api/finance/groups/${id}`,
+    members:     (id: number) => `/api/finance/groups/${id}/members`,
+    invite:      (id: number) => `/api/finance/groups/${id}/invite`,
+    accept:      (id: number) => `/api/finance/groups/${id}/accept`,
+    leave:       (id: number) => `/api/finance/groups/${id}/leave`,
+    expenses:    (id: number) => `/api/finance/groups/${id}/expenses`,
+    expenseById: (id: number, expenseId: number) => `/api/finance/groups/${id}/expenses/${expenseId}`,
+    balances:    (id: number) => `/api/finance/groups/${id}/balances`,
+    payments:    (id: number) => `/api/finance/groups/${id}/payments`,
+  },
+  CHAT: {
+    messages: (groupId: number) => `/api/chat/groups/${groupId}/messages`,
+    presence: (groupId: number) => `/api/chat/groups/${groupId}/presence`,
+    UNREAD:   '/api/chat/unread',
+    /** URL absolut pentru conexiunea SignalR (gateway → downstream /api/hubs/chat). */
+    HUB:      '/api/chat/hubs/chat',
+  },
+} as const;

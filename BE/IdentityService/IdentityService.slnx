@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="IdentityService.DTO/IdentityService.DTO.csproj" />
+  <Project Path="IdentityService.Services/IdentityService.Services.csproj" />
+  <Project Path="IdentityService/IdentityService.API.csproj" />
+  <Project Path="IdentutyService.Infrastucture/IdentutyService.Infrastucture.csproj" />
+  <Project Path="IdentityService.Tests/IdentityService.Tests.csproj" />
+</Solution>

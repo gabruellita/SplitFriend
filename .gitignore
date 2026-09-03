@@ -1,0 +1,22 @@
+# ===== Secrets / environment =====
+.env
+.env.*
+!.env.example
+
+# ===== .NET build artifacts =====
+bin/
+obj/
+*.user
+.vs/
+*.suo
+
+# ===== Node / frontend build =====
+node_modules/
+dist/
+build/
+*.local
+
+# ===== Logs & OS =====
+*.log
+.DS_Store
+Thumbs.db

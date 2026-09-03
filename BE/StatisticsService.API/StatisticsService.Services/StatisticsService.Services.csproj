@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>StatisticsService.Services</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StatisticsService.Infrastructure\StatisticsService.Infrastructure.csproj" />
+    <ProjectReference Include="..\StatisticsService.DTO\StatisticsService.DTO.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- IDistributedCache pentru caching Redis -->
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

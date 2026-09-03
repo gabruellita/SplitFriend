@@ -1,0 +1,385 @@
+{
+  "info": {
+    "name": "FinanceApp - Suita de teste end-to-end (prin API Gateway)",
+    "description": "Colectie de teste functionale care valideaza fiecare microserviciu PRIN API Gateway (http://localhost:5010), conform capitolului 6 al lucrarii. Fiecare cerere are scripturi de test (pm.test) care verifica codul de stare si forma raspunsului; rezultatele agregate se obtin cu Collection Runner.\n\nPRECONDITII: intreaga infrastructura pornita (docker compose up -d) + cele 7 microservicii + Gateway (vezi GHID-RULARE-PROIECT.md).\n\nFLUX: folderul '00 - Identity' creeaza un cont nou, il confirma automat citind e-mailul din API-ul MailHog (http://localhost:8025) si face login, salvand accessToken in variabilele colectiei. Restul folderelor refolosesc token-ul. Daca preferi, seteaza manual variabilele testEmail/testPassword pe un cont deja ACTIV si ruleaza doar de la 'Login'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5010" },
+    { "key": "mailhogUrl", "value": "http://localhost:8025" },
+    { "key": "testEmail", "value": "" },
+    { "key": "testUsername", "value": "" },
+    { "key": "testPassword", "value": "Test1234!" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "currencyId", "value": "" },
+    { "key": "confirmToken", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "transactionId", "value": "" },
+    { "key": "templateId", "value": "" },
+    { "key": "groupId", "value": "" },
+    { "key": "expenseId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 - Identity (conturi, autentificare, sesiuni)",
+      "item": [
+        {
+          "name": "GET currencies (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/identity/currencies", "host": ["{{baseUrl}}"], "path": ["api","identity","currencies"] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const arr = pm.response.json();",
+              "pm.test('lista de monede nevida', () => pm.expect(arr.length).to.be.above(0));",
+              "pm.collectionVariables.set('currencyId', String(arr[0].id));"
+            ] }
+          }]
+        },
+        {
+          "name": "POST register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"{{testPassword}}\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Postman\",\n  \"preferredCurrencyId\": {{currencyId}}\n}" },
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/register", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","register"] }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [
+                "// genereaza un cont nou la fiecare rulare",
+                "const n = Date.now();",
+                "pm.collectionVariables.set('testEmail', `test${n}@financeapp.local`);",
+                "pm.collectionVariables.set('testUsername', `test${n}`);"
+              ] }
+            },
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "pm.test('201 Created', () => pm.response.to.have.status(201));"
+              ] }
+            }
+          ]
+        },
+        {
+          "name": "GET MailHog - extrage token confirmare",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{mailhogUrl}}/api/v2/search?kind=to&query={{testEmail}}", "host": ["{{mailhogUrl}}"], "path": ["api","v2","search"], "query": [{ "key": "kind", "value": "to" }, { "key": "query", "value": "{{testEmail}}" }] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const res = pm.response.json();",
+              "pm.test('MailHog are e-mailul de confirmare', () => pm.expect(res.items.length).to.be.above(0));",
+              "let body = res.items[0].Content.Body;",
+              "body = body.replace(/=\\r?\\n/g, '');                 // elimina soft-breaks quoted-printable",
+              "const m = body.match(/confirm-email\\?token=(?:3D)?([^\"'<\\s]+)/);",
+              "pm.test('token gasit in e-mail', () => pm.expect(m, 'regex match').to.not.be.null);",
+              "if (m) pm.collectionVariables.set('confirmToken', decodeURIComponent(m[1]));"
+            ] }
+          }]
+        },
+        {
+          "name": "POST confirm-email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"token\": \"{{confirmToken}}\" }" },
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/confirm-email", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","confirm-email"] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK (cont activat)', () => pm.response.to.have.status(200));"
+            ] }
+          }]
+        },
+        {
+          "name": "POST login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"email\": \"{{testEmail}}\", \"password\": \"{{testPassword}}\" }" },
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/login", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","login"] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('contine accessToken + refreshToken', () => { pm.expect(d.accessToken).to.be.a('string'); pm.expect(d.refreshToken).to.be.a('string'); });",
+              "pm.collectionVariables.set('accessToken', d.accessToken);",
+              "pm.collectionVariables.set('refreshToken', d.refreshToken);",
+              "if (d.user && d.user.id) pm.collectionVariables.set('userId', String(d.user.id));"
+            ] }
+          }]
+        },
+        {
+          "name": "GET me (protejat)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/me", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","me"] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "if (d.id) pm.collectionVariables.set('userId', String(d.id));"
+            ] }
+          }]
+        },
+        {
+          "name": "GET me fara token (asteptam 401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/me", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","me"] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('401 Unauthorized (ruta protejata fara token)', () => pm.response.to.have.status(401));"
+            ] }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "01 - Finance (finante personale)",
+      "item": [
+        {
+          "name": "GET categories",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/finance/categories", "host": ["{{baseUrl}}"], "path": ["api","finance","categories"] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const arr = pm.response.json();",
+            "const expense = arr.find(c => c.kind === 'EXPENSE') || arr[0];",
+            "if (expense) pm.collectionVariables.set('categoryId', String(expense.id));"
+          ] } }]
+        },
+        {
+          "name": "POST transaction (creare)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 123.45,\n  \"kind\": \"EXPENSE\",\n  \"transactionDate\": \"2026-06-10\",\n  \"categoryId\": {{categoryId}},\n  \"description\": \"Test Postman\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/finance/transactions", "host": ["{{baseUrl}}"], "path": ["api","finance","transactions"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "const d = pm.response.json();",
+            "if (d.id) pm.collectionVariables.set('transactionId', String(d.id));"
+          ] } }]
+        },
+        {
+          "name": "GET transactions",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/finance/transactions?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","finance","transactions"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('raspuns lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ] } }]
+        },
+        {
+          "name": "GET transactions/summary",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/finance/transactions/summary?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","finance","transactions","summary"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const d = pm.response.json();",
+            "pm.test('contine totaluri', () => pm.expect(d).to.have.property('totalExpense'));"
+          ] } }]
+        },
+        {
+          "name": "POST recurring-template (creare)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 50,\n  \"kind\": \"EXPENSE\",\n  \"frequency\": \"MONTHLY\",\n  \"intervalCount\": 1,\n  \"startDate\": \"2026-03-01\",\n  \"endDate\": null,\n  \"categoryId\": {{categoryId}},\n  \"description\": \"Abonament test\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/finance/recurring-templates", "host": ["{{baseUrl}}"], "path": ["api","finance","recurring-templates"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "const d = pm.response.json();",
+            "if (d.id) pm.collectionVariables.set('templateId', String(d.id));"
+          ] } }]
+        },
+        {
+          "name": "POST recurring-templates/run-due",
+          "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/finance/recurring-templates/run-due", "host": ["{{baseUrl}}"], "path": ["api","finance","recurring-templates","run-due"] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('raporteaza generatedCount', () => pm.expect(pm.response.json()).to.have.property('generatedCount'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "02 - Currency (cursuri valutare, public)",
+      "item": [
+        {
+          "name": "GET rates?base=EUR",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/api/currency/rates?base=EUR", "host": ["{{baseUrl}}"], "path": ["api","currency","rates"], "query": [{ "key": "base", "value": "EUR" }] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('contine rate', () => pm.expect(pm.response.json()).to.have.property('rates'));"
+          ] } }]
+        },
+        {
+          "name": "GET convert EUR->RON",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/api/currency/convert?from=EUR&to=RON&amount=100", "host": ["{{baseUrl}}"], "path": ["api","currency","convert"], "query": [{ "key": "from", "value": "EUR" }, { "key": "to", "value": "RON" }, { "key": "amount", "value": "100" }] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const d = pm.response.json();",
+            "pm.test('contine result + rate', () => { pm.expect(d).to.have.property('result'); pm.expect(d).to.have.property('rate'); });"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 - Groups & Split Bill",
+      "item": [
+        {
+          "name": "POST groups (creare)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Grup test Postman\", \"description\": \"E2E\", \"currencyId\": {{currencyId}} }" },
+            "url": { "raw": "{{baseUrl}}/api/finance/groups", "host": ["{{baseUrl}}"], "path": ["api","finance","groups"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "const d = pm.response.json();",
+            "if (d.id) pm.collectionVariables.set('groupId', String(d.id));"
+          ] } }]
+        },
+        {
+          "name": "GET groups",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/finance/groups", "host": ["{{baseUrl}}"], "path": ["api","finance","groups"] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));"
+          ] } }]
+        },
+        {
+          "name": "GET groups/{id}/members",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/finance/groups/{{groupId}}/members", "host": ["{{baseUrl}}"], "path": ["api","finance","groups","{{groupId}}","members"] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));"
+          ] } }]
+        },
+        {
+          "name": "POST expense (split EQUAL, doar platitorul)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Cina test\",\n  \"amount\": 90,\n  \"paidByUserId\": {{userId}},\n  \"splitType\": \"EQUAL\",\n  \"expenseDate\": \"2026-06-10\",\n  \"participants\": [{ \"userId\": {{userId}} }]\n}" },
+            "url": { "raw": "{{baseUrl}}/api/finance/groups/{{groupId}}/expenses", "host": ["{{baseUrl}}"], "path": ["api","finance","groups","{{groupId}}","expenses"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));"
+          ] } }]
+        },
+        {
+          "name": "GET groups/{id}/balances",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/finance/groups/{{groupId}}/balances", "host": ["{{baseUrl}}"], "path": ["api","finance","groups","{{groupId}}","balances"] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('raspuns lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "04 - Statistics (agregari read-only)",
+      "item": [
+        { "name": "GET timeseries", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/timeseries?from=2026-01-01&to=2026-12-31&granularity=month", "host": ["{{baseUrl}}"], "path": ["api","statistics","timeseries"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }, { "key": "granularity", "value": "month" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET category-breakdown", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/category-breakdown?from=2026-01-01&to=2026-12-31&kind=EXPENSE", "host": ["{{baseUrl}}"], "path": ["api","statistics","category-breakdown"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }, { "key": "kind", "value": "EXPENSE" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET top-categories", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/top-categories?from=2026-01-01&to=2026-12-31&kind=EXPENSE&limit=5", "host": ["{{baseUrl}}"], "path": ["api","statistics","top-categories"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }, { "key": "kind", "value": "EXPENSE" }, { "key": "limit", "value": "5" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET calendar", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/calendar?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","statistics","calendar"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET histogram", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/histogram?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","statistics","histogram"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET savings-rate", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/savings-rate?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","statistics","savings-rate"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET running-balance", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/running-balance?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","statistics","running-balance"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET mom", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/mom?from=2026-01-01&to=2026-12-31&kind=EXPENSE&granularity=month", "host": ["{{baseUrl}}"], "path": ["api","statistics","mom"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }, { "key": "kind", "value": "EXPENSE" }, { "key": "granularity", "value": "month" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET pareto", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/pareto?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","statistics","pareto"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET weekday", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/weekday?from=2026-01-01&to=2026-12-31&kind=EXPENSE", "host": ["{{baseUrl}}"], "path": ["api","statistics","weekday"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }, { "key": "kind", "value": "EXPENSE" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET recurring-split", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/statistics/recurring-split?from=2026-01-01&to=2026-12-31", "host": ["{{baseUrl}}"], "path": ["api","statistics","recurring-split"], "query": [{ "key": "from", "value": "2026-01-01" }, { "key": "to", "value": "2026-12-31" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] }
+      ]
+    },
+    {
+      "name": "05 - Chat (REST)",
+      "item": [
+        { "name": "GET messages (istoric)", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/chat/groups/{{groupId}}/messages?limit=50", "host": ["{{baseUrl}}"], "path": ["api","chat","groups","{{groupId}}","messages"], "query": [{ "key": "limit", "value": "50" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "GET unread", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/chat/unread", "host": ["{{baseUrl}}"], "path": ["api","chat","unread"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }] }
+      ]
+    },
+    {
+      "name": "06 - Export (PDF)",
+      "item": [
+        {
+          "name": "POST report (RANGE, toate blocurile)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"mode\": \"RANGE\",\n  \"range\": { \"from\": \"2026-01-01\", \"to\": \"2026-12-31\" },\n  \"blocks\": [\"SUMMARY\", \"TREND\", \"CATEGORIES\", \"TRANSACTIONS\"]\n}" },
+            "url": { "raw": "{{baseUrl}}/api/export/report", "host": ["{{baseUrl}}"], "path": ["api","export","report"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('raspuns PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "07 - Sesiune (refresh + logout)",
+      "item": [
+        {
+          "name": "POST refresh (rotatie token)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"refreshToken\": \"{{refreshToken}}\" }" },
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","refresh"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const d = pm.response.json();",
+            "pm.test('pereche noua de token-uri', () => { pm.expect(d.accessToken).to.be.a('string'); pm.expect(d.refreshToken).to.be.a('string'); });",
+            "pm.collectionVariables.set('accessToken', d.accessToken);",
+            "pm.collectionVariables.set('refreshToken', d.refreshToken);"
+          ] } }]
+        },
+        {
+          "name": "POST logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"refreshToken\": \"{{refreshToken}}\" }" },
+            "url": { "raw": "{{baseUrl}}/api/identity/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","identity","auth","logout"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK (sesiune revocata)', () => pm.response.to.have.status(200));"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ChatService.API/ChatService.API.csproj" />
+  <Project Path="ChatService.DTO/ChatService.DTO.csproj" />
+  <Project Path="ChatService.Infrastructure/ChatService.Infrastructure.csproj" />
+  <Project Path="ChatService.Services/ChatService.Services.csproj" />
+</Solution>

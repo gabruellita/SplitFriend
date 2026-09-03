@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL 16 ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: identity_postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB:       finance_db
+      POSTGRES_USER:     finance_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA:            /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts montate ca fisiere individuale, numerotate, ca sa garanteze ordinea:
+      # Identity (creeaza `currencies`) ruleaza INAINTE de Finance (care face FK la `currencies`).
+      # Postgres ruleaza doar fisierele din radacina /docker-entrypoint-initdb.d (nu subfoldere).
+      - ./IdentityService/DataBase/init/01_schema.sql:/docker-entrypoint-initdb.d/01_identity_schema.sql:ro
+      - ./IdentityService/DataBase/init/02_procedures.sql:/docker-entrypoint-initdb.d/02_identity_procedures.sql:ro
+      - ./FinanceService.API/DataBase/init/01_schema.sql:/docker-entrypoint-initdb.d/03_finance_schema.sql:ro
+      - ./FinanceService.API/DataBase/init/02_procedures.sql:/docker-entrypoint-initdb.d/04_finance_procedures.sql:ro
+      - ./StatisticsService.API/DataBase/init/02_stats_procedures.sql:/docker-entrypoint-initdb.d/05_statistics_procedures.sql:ro
+      - ./ChatService.API/DataBase/init/01_chat_schema.sql:/docker-entrypoint-initdb.d/06_chat_schema.sql:ro
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U finance_user -d finance_db"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - finance-network
+
+  # ── pgAdmin (UI pentru baza de date) ───────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: identity_pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@finance.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finance-network
+
+  # ── Redis (cache sesiuni JWT) ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: identity_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:     ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      retries:  5
+    networks:
+      - finance-network
+
+  # ── MailHog (FakeSMTP — vizualizare email-uri de confirmare) ──────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: identity_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"    # SMTP (folosit de aplicație)
+      - "8025:8025"    # Web UI → http://localhost:8025
+    networks:
+      - finance-network
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  redis_data:
+
+networks:
+  finance-network:
+    driver: bridge

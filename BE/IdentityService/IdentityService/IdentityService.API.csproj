@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>IdentityService.API</RootNamespace>
+    <UserSecretsId>0b701807-c12b-4ccb-ade7-f684d1b4ca4c</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Referinte catre celelalte layere -->
+    <ProjectReference Include="..\IdentityService.Services\IdentityService.Services.csproj" />
+    <ProjectReference Include="..\IdentutyService.Infrastucture\IdentutyService.Infrastucture.csproj" />
+    <ProjectReference Include="..\IdentityService.DTO\IdentityService.DTO.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- JWT Bearer — validare token la nivel de API -->
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <!-- FluentValidation -->
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <!-- Redis cache sesiuni -->
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
+    <!-- Swagger UI -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+  </ItemGroup>
+
+</Project>
