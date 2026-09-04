@@ -134,7 +134,7 @@ Răspuns `204` → refresh token-ul e revocat.
 |---------|-----|-------------|
 | **Swagger UI** | http://localhost:5067/swagger | — |
 | **MailHog** (email-uri) | http://localhost:8025 | — |
-| **pgAdmin** (baza de date) | http://localhost:5050 | `admin@finance.local` / `admin123` |
+| **pgAdmin** (baza de date) | http://localhost:5050 | vezi `PGADMIN_EMAIL` / `PGADMIN_PASSWORD` din `BE/.env` |
 
 ### Conectare pgAdmin la baza de date:
 1. Deschide http://localhost:5050
@@ -145,7 +145,7 @@ Răspuns `204` → refresh token-ul e revocat.
    - Port: `5432`
    - Database: `finance_db`
    - Username: `finance_user`
-   - Password: `FinanceP@ss2026!`
+   - Password: `<valoarea DB_PASSWORD din BE/.env>`
 
 ---
 

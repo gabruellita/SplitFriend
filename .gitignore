@@ -20,3 +20,13 @@ build/
 *.log
 .DS_Store
 Thumbs.db
+
+# ===== Documente lucrare / prezentari (nu se publica pe GitHub) =====
+*.pdf
+*.docx
+*.pptx
+
+# ===== Unelte & artefacte locale =====
+.claude/
+out/
+_extract/
